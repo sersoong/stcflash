@@ -24,7 +24,7 @@ import os.path
 import binascii
 import struct
 import argparse
-
+import pdb
 
 PROTOCOL_89 = "89"
 PROTOCOL_12C5A = "12c5a"
@@ -213,7 +213,7 @@ class Programmer:
         elif self.chkmode > 1 and (chksum >> 8) & 0xFF != s[-3]:
             logging.debug("recv(..): Incorrect checksum[1]")
             raise IOError()
-
+        logging.info(s)
         return (s[0], s[1:-(1+self.chkmode)])
 
     def send(self, cmd, dat):
@@ -234,8 +234,10 @@ class Programmer:
     def detect(self):
         for i in range(1000):
             try:
-                self.__conn_write([0x7F, 0x7F])
+                self.__conn_write([0x7F])
                 cmd, dat = self.recv(0.015, [0x68])
+                # for d in dat:
+                #     print("%02X" % d)
                 break
             except IOError:
                 pass
@@ -330,10 +332,8 @@ class Programmer:
 
     def handshake(self):
         baud0 = self.conn.baudrate
-
         for baud in [115200, 57600, 38400, 28800, 19200,
                      14400, 9600, 4800, 2400, 1200]:
-
             t = self.fosc * 1000000 / baud / 32
             if self.protocol not in PROTOSET_89:
                 t *= 2
@@ -347,7 +347,6 @@ class Programmer:
                 if t > 0xFF:
                     continue
                 tcfg = 0xC000 + 0x100 - int(t + 0.5)
-
             baudstr = [tcfg >> 8,
                        tcfg & 0xFF,
                        0xFF - (tcfg >> 8),
@@ -616,7 +615,7 @@ def hex2bin(code):
 
 def main():
     if sys.platform == "win32":
-        port = "COM3"
+        port = "COM4"
     elif sys.platform == "darwin":
         port = "/dev/tty.usbserial"
     else:
